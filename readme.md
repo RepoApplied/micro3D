@@ -17,10 +17,71 @@ The microscope is designed to enable axial displacement of the focal plane throu
 ## System Visualization
 
 ![Microscope 3D Render](micro_3d_render.png)
+
+
 *Figure 1: 3D render of the microscope components and optical layout.*
 
 ---
 
+---
+
+## 🔧 Assembly & Hardware Details
+
+The mechanical assembly and electronic control are divided into two main modules to ensure precise movement and lighting management.
+
+### Motion & Lighting Control
+* **X-Y Axis Control:** Driven by **two NEMA 17 stepper motors** for precise lateral sample positioning.
+* **Z-Axis & Lighting:** A **third NEMA 17 motor** controls the axial displacement (focus), while the system integrates the microscope's illumination control.
+* **Electronics:**
+    * **2 × Arduino Uno** boards (distributed control).
+    * **Adafruit Motor Shield v2** on each Arduino for high-resolution motor stepping.
+
+### Mechanical Specifications
+* **Drive Mechanism:** 5 mm threaded rods coupled with the motors, using corresponding hexagonal nuts to translate rotational motion into linear displacement.
+* **Support Rods:** 4 mm diameter **stainless steel rods** used as linear guides to ensure smooth and rigid travel.
+* **Stability Tip:** It is highly recommended to mount the 3D-printed assembly within an **external aluminum frame** to guarantee system stability and minimize mechanical vibrations during image acquisition.
+
+---
+
+## Setup & Calibration
+
+1.  **Mechanical Alignment:** Ensure the 4 mm stainless steel rods are perfectly parallel to prevent friction or jamming in the X, Y, and Z stages.
+2.  **Motor Configuration:** One Arduino/Shield pair is dedicated to the X-Y stage, while the second pair manages the Z-axis and the illumination intensity.
+3.  **Vibration Dampening:** Tighten all 5 mm nuts and ensure the aluminum structure is properly leveled.
+
+## Software Architecture & Control Logic
+
+The system operates through a **Master-Slave architecture** where a Python-based controller orchestrates the hardware via serial communication.
+
+### 1. High-Level Controller (Python)
+The `main_controller.py` script manages hardware synchronization:
+* **Automatic Device Discovery:** Identifies `Arduino_1` (XY), `Arduino_2` (Z/Light), and the **Optotune ETL** via a handshake protocol (sending '0').
+* **Asynchronous Processing:** Uses `multiprocessing` to run hardware control and the uEye camera live feed in parallel.
+* **Event-Driven Input:** A keyboard listener maps specific keys to serial commands.
+
+### 2. Firmware Logic (C++/Arduino)
+Both Arduinos run a command-listener loop at **115,200 baud**.
+
+* **Arduino 1 (XY Stage):** Handles fine stepping (10 steps) and fast travel (1000 steps) for the X and Y axes.
+* **Arduino 2 (Z-Axis & Light):** Manages vertical focus displacement and toggles digital pins (8/9 and 12/13) for illumination control.
+
+---
+
+## ⌨️ Control Mapping Reference
+
+| Key | Action | Target Device | Command Sent |
+| :--- | :--- | :--- | :--- |
+| **W / S** | Move X-Axis (Fine) | Arduino 1 | `1` / `2` |
+| **A / D** | Move Y-Axis (Fine) | Arduino 1 | `3` / `4` |
+| **I / K** | Move X-Axis (Fast) | Arduino 1 | `5` / `6` |
+| **J / L** | Move Y-Axis (Fast) | Arduino 1 | `7` / `8` |
+| **Q / E** | Move Z-Axis (Focus) | Arduino 2 | `1` / `2` |
+| **U / O** | Toggle Illumination A | Arduino 2 | `3` |
+| **F / T** | Toggle Illumination B | Arduino 2 | `4` |
+| **Z / X** | +/- ETL Current | Optotune ETL | Serial API |
+| **P** | Emergency Stop / Exit | All | — |
+
+---
 
 ## References
 

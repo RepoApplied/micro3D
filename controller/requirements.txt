@@ -1,0 +1,6 @@
+pyserial>=3.5
+pynput>=1.7.6
+opencv-python>=4.8.0
+numpy>=1.24.0
+opto>=1.0.1
+pyueye>=4.96.0
